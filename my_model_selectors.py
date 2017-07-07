@@ -105,4 +105,14 @@ class SelectorCV(ModelSelector):
         warnings.filterwarnings("ignore", category=DeprecationWarning)
 
         # TODO implement model selection using CV
+
+
+        split_method = KFold()
+        for cv_train_idx, cv_test_idx in split_method.split(self.sequences):
+            X_train, lengths_train  = combine_sequences(cv_train_idx, self.sequences)
+            X_test, lengths_test = combine_sequences(cv_test_idx, self.sequences)
+            
+
+
+
         raise NotImplementedError
