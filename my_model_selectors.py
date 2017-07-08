@@ -76,8 +76,23 @@ class SelectorBIC(ModelSelector):
         """
         warnings.filterwarnings("ignore", category=DeprecationWarning)
 
-        # TODO implement model selection based on BIC scores
-        raise NotImplementedError
+        max_components = self.min_n_components
+        max_bic = math.inf
+        for num_hidden_states in range(self.min_n_components, self.max_n_components + 1):
+            try:
+                model = GaussianHMM(n_components=num_hidden_states, n_iter=1000, random_state=self.random_state) \
+                    .fit(self.X, self.lengths)
+                logL = model.score(self.X, self.lengths)
+                bic = (-2) * logL + num_hidden_states * math.log(len(self.sequences))
+
+                if bic < max_bic:
+                    max_bic = bic
+                    max_components = num_hidden_states
+            except Exception as e:
+                print(e)
+                continue
+
+        return self.base_model(max_components)
 
 
 class SelectorDIC(ModelSelector):
@@ -92,8 +107,30 @@ class SelectorDIC(ModelSelector):
     def select(self):
         warnings.filterwarnings("ignore", category=DeprecationWarning)
 
-        # TODO implement model selection based on DIC scores
-        raise NotImplementedError
+        max_components = self.min_n_components
+        max_dic = -math.inf
+        for num_hidden_states in range(self.min_n_components, self.max_n_components + 1):
+            try:
+                model = GaussianHMM(n_components=num_hidden_states, n_iter=1000, random_state=self.random_state) \
+                    .fit(self.X, self.lengths)
+                this_word_score = model.score(self.X, self.lengths)
+
+                word_score = 0
+                for key, (X, lenghts) in self.hwords.items():
+                    if key == self.this_word:
+                        continue
+                    word_score += model.score(X, lenghts)
+                dic = abs(this_word_score - (1/(len(self.hwords) - 1) * word_score))
+
+                if dic > max_dic:
+                    max_dic = dic
+                    max_components = num_hidden_states
+            except Exception as e:
+                print(e)
+                continue
+
+        return self.base_model(max_components)
+
 
 
 class SelectorCV(ModelSelector):
@@ -102,29 +139,27 @@ class SelectorCV(ModelSelector):
     '''
 
     def select(self):
-        #warnings.filterwarnings("ignore", category=DeprecationWarning)
+        warnings.filterwarnings("ignore", category=DeprecationWarning)
 
-        # TODO implement model selection using CV
-
-        max_model = None
+        max_components = self.min_n_components
         max_score = -math.inf
-
         for num_hidden_states in range(self.min_n_components, self.max_n_components + 1):
-            split_method = KFold()
+            split_method = KFold(random_state=self.random_state)
             try:
                 for cv_train_idx, cv_test_idx in split_method.split(self.sequences):
                     X_train, lengths_train = combine_sequences(cv_train_idx, self.sequences)
                     X_test, lengths_test = combine_sequences(cv_test_idx, self.sequences)
 
-                    model = GaussianHMM(n_components=num_hidden_states, n_iter=1000).fit(X_train, lengths_train)
+                    model = GaussianHMM(n_components=num_hidden_states, n_iter=1000, random_state=self.random_state)\
+                        .fit(X_train, lengths_train)
                     logL = model.score(X_test, lengths_test)
 
                     if logL > max_score:
                         max_score = logL
-                        max_model = model
-            except:
+                        max_components = num_hidden_states
+            except Exception as e:
+                print(e)
                 continue
 
-        #raise NotImplementedError
-        return max_model
+        return self.base_model(max_components)
 
