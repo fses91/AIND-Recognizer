@@ -28,6 +28,7 @@ def recognize(models: dict, test_set: SinglesData):
                 score = model.score(X, lengths)
                 sequence_probabilities[model_key] = score
             except Exception as e:
+                sequence_probabilities[model_key] = float("-inf")
                 print(e)
 
         probabilities.append(sequence_probabilities)
