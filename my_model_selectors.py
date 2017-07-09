@@ -83,7 +83,12 @@ class SelectorBIC(ModelSelector):
                 model = GaussianHMM(n_components=num_hidden_states, n_iter=1000, random_state=self.random_state) \
                     .fit(self.X, self.lengths)
                 logL = model.score(self.X, self.lengths)
-                bic = (-2) * logL + num_hidden_states * math.log(len(self.sequences))
+
+                n = num_hidden_states
+                n_data_points = len(self.X)
+                n_features = len(self.X[0])
+                p = (n ** 2) + (2 * n_features * n) - 1
+                bic = (-2) * logL + p*math.log(n_data_points)
 
                 if bic < max_bic:
                     max_bic = bic
