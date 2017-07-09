@@ -89,7 +89,8 @@ class SelectorBIC(ModelSelector):
                     max_bic = bic
                     max_components = num_hidden_states
             except Exception as e:
-                print(e)
+                if self.verbose:
+                    print(e)
                 continue
 
         return self.base_model(max_components)
@@ -126,7 +127,8 @@ class SelectorDIC(ModelSelector):
                     max_dic = dic
                     max_components = num_hidden_states
             except Exception as e:
-                print(e)
+                if self.verbose:
+                    print(e)
                 continue
 
         return self.base_model(max_components)
@@ -158,7 +160,8 @@ class SelectorCV(ModelSelector):
                         max_score = logL
                         max_components = num_hidden_states
             except Exception as e:
-                print(e)
+                if self.verbose:
+                    print(e)
                 continue
 
         return self.base_model(max_components)
